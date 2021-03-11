@@ -118,6 +118,17 @@ class Api {
         })
     }
 
+    orgInfo() {
+        return this.apiWait().then(result => {
+            return Ext.Ajax.request({
+                url: '/api/?a=orgInfo',
+                async: true,//changed
+                success: function(response){ this.responseCheck(response)}
+
+            });
+        })
+    }
+
     deviceList(appid,inspectionid) {
         return this.apiWait().then(result => {
             return Ext.Ajax.request({

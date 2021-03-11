@@ -15,11 +15,15 @@ Ext.define('MyApp.view.main.Main', {
         id: 'mainView',
         renderTo: 'FakeViewport',
         height:'100%',
-        loading:true,
+        // loading:true,
         //Note: Defines the min size
         fakeViewportMinHeight: 600,
         fakeViewportMinWidth: 982,
-
+        listeners: {
+            render: function() {
+                Ext.getCmp('mainView').setLoading(true)
+            }
+        },
         //Note: This is needed to setup the code that adjusts the size of the ExtJs app depending on the window size.
         //need to adusjt margins with a css class check the cuistome sss
 
@@ -31,7 +35,7 @@ Ext.define('MyApp.view.main.Main', {
 
         tbar:[
             {
-                text: 'Get Data',
+                text: 'Refresh Data',
                 id:'getDatabtn',
                 cls: 'barButton x-btn-default-small',
                 tooltip: 'Gather all data on inspections and orgs',
@@ -40,115 +44,51 @@ Ext.define('MyApp.view.main.Main', {
                 },
                 disabled:false,
             },
+            {
+                text: 'Export/Print Data',
+                id:'expDatabtn2',
+                cls: 'barButton x-btn-default-small',
+                tooltip: 'Export',
+                handler: function() {
+                    let body = Ext.dom.Query.selectNode('#reportView-body');
+                    plugin.Printer.print(body,true);
+
+                },
+                disabled:true,
+            },
+
+            // {
+            //     text: 'Export Data',
+            //     id:'expDatabtn',
+            //     cls: 'barButton x-btn-default-small',
+            //     tooltip: 'Export',
+            //     handler: function() {
+            //         creatOutput();
+            //     },
+            //     disabled:false,
+            // },
         ],
 
         items: [
-            // {
-            //     xtype: 'panel',
-            //     id:'headerPanel',
-            //     collapsible:false,
-            //     bodyBorder:false,
-            //     header:false,
-            //     viewModel: {
-            //         data: [
-            //             {name:'test1'},
-            //             {name:'test2'},
-            //             {name:'test3'},
-            //             {name:'test4'},
-            //
-            //
-            //         ]
-            //     },
-            //     bind: {
-            //         data: '{data}'
-            //     },
-            //     border: 1,
-            //     tpl: [
-            //         '<tpl for=".">',
-            //         '<div>test</div>',
-            //         'First Name: {name} <br>',
-            //         'Last Name: {lName}',
-            //         '<hr>',
-            //         '</tpl>'
-            //     ],
-            //     // tpl: [
-            //     //     '<h1>This is a test of teh header</h1>',
-            //     //     '<tpl for=".">',
-            //     //     '<div class="dataview-org-item">',
-            //     //     '<div class="container">{name}',
-            //     //     '</div>',
-            //     //     //
-            //     //     // '<img src="resources/icons/pngwingblank.png" class="smallImage"/>',
-            //     //     // '<div id="top-icon" style="left: 50px; top: 15px; position: absolute">',
-            //     //     // '<img src="{[this.getImage(values.appid)]}" class="smallImageIcon"/>',
-            //     //     // '</div>',
-            //     //     // '<tpl  if="this.healthCheck(details)">',
-            //     //     // '<div id="right1-icon" style="left: 180px; top: 0px; position: absolute">',
-            //     //     //
-            //     //     // '<img src="resources/icons/meidcal300px.png" class="smallImageIcon"/>',
-            //     //     // '</div>',
-            //     //     // '</tpl>',
-            //     //     // '<h3 class="name">{name}</h3>',
-            //     //     // // '<span class="txt-owned">{[values.owned? \' Your Org already owns this Report Type\':\'Add to request cart for a quote\']} </span>',
-            //     //     // '</span>',
-            //     //     // '<div class="overlay">',
-            //     //     // '<div class="text">{description}</div>',
-            //     //     // '<span class="previewLink">',
-            //     //     // '<button class="button preview" data-name="{name}" data-link="{link}" onClick="{openPreview(this)}">Preview</button>',
-            //     //     // // '<a  class="button" href="{[this.test(values)]}" >Preview</a>',
-            //     //     // '</span>',
-            //     //     // '</div>',
-            //     //     // '</div>',
-            //     //     //
-            //     //     // '<span class="cartBtn {[this.inCart(values.inCart)]} {[values.owned? \'owned-disabled\':\'\']}">',
-            //     //     // '<button  class="button {[values.inCart? \'cart-disabled\':\'\']} {[values.owned? \'owned-disabled\':\'\']}" data-id="{id}" data-owned="{owned}" onClick="{addToCart(this)}" >{[this.cartStatus(values.owned,values.inCart)]}</button>',
-            //     //     // '</span>',
-            //     //     '</div>',
-            //     //     '</tpl>',
-            //     // ],
-            //     tbar:[
-            //         // {
-            //         //     text: 'Get poop',
-            //         //     id:'fart',
-            //         //     cls: 'barButton x-btn-default-small',
-            //         //     tooltip: 'Gather all data on inspections and orgs',
-            //         //     handler: function() {
-            //         //         let tpl = new Ext.XTemplate(
-            //         //             '<p>Name: {name}</p>',
-            //         //             '<p>Title: {title}</p>',
-            //         //             '<p>Company: {company}</p>',
-            //         //             '<p>Kids: ',
-            //         //             '<tpl for="kids">',     // interrogate the kids property within the data
-            //         //             '<p>{name}</p>',
-            //         //             '</tpl></p>'
-            //         //         );
-            //         //         // Ext.getCmp('headerPanel').html
-            //         //         tpl.append(Ext.getCmp('headerPanel').body,{
-            //         //             name: 'Don Griffin',
-            //         //             title: 'Senior Technomage',
-            //         //             company: 'Sencha Inc.',
-            //         //             drinks: ['Coffee', 'Water', 'More Coffee'],
-            //         //             kids: [
-            //         //                 { name: 'Aubrey',  age: 17 },
-            //         //                 { name: 'Joshua',  age: 13 },
-            //         //                 { name: 'Cale',    age: 10 },
-            //         //                 { name: 'Nikol',   age: 5 },
-            //         //                 { name: 'Solomon', age: 0 }
-            //         //             ]
-            //         //         })
-            //         //     },
-            //         //     disabled:false,
-            //         // },
-            //     ],
-            //
-            //     width: 300,
-            //     height: 150,
-            // },
             {
                 xtype: 'panel',
                 id:'reportView',
                 alias: 'widget.mypanel',
                 tbar:[
+                    // {
+                    //     text: 'Export Data',
+                    //     id:'expDatabtn2',
+                    //     cls: 'barButton x-btn-default-small',
+                    //     tooltip: 'Export',
+                    //     handler: function() {
+                    //         // let test2 = Ext.dom.Query.selectNode('#reportView-body');
+                    //         let test = Ext.dom.Query.selectNode('#reportView-body');
+                    //
+                    //         plugin.Printer.print(test,true);
+                    //
+                    //     },
+                    //     disabled:false,
+                    // },
 
                 ],
                 viewModel: {
@@ -161,9 +101,9 @@ Ext.define('MyApp.view.main.Main', {
                 border: 1,
                 width: '100%',
                 height: '100%',
-                title: 'XTemplate Data Binding Example',
+                // title: 'XTemplate Data Binding Example',
                 tpl: [
-                    '<div class="masterDiv">',
+                    '<div class="masterDiv" id="masterDiv">',
                     '<h1>Most Recent Inspection Status Report (by Vendor)' +
                     '<h2>Overall Percentage of Failed inspections: {totalPercent:number(\'0.0\')}%</h2>',
                     '<div class="navSection">',
@@ -179,7 +119,7 @@ Ext.define('MyApp.view.main.Main', {
                     '<tpl for="orgs">',
 
                         '<div class="dataview-org-item">',
-                        '<h3 class="vendorName" id="{orgid}">Vendor Name: {name}',
+                        '<h3 class="vendorName" id="{orgid}">{name}',
                         '</h3>',
                         '<h4 class="vendorName">Vendor Percentage of Failed inspections: {[values.getPercent().per]} %',
                         '</h4>',
@@ -197,7 +137,7 @@ Ext.define('MyApp.view.main.Main', {
                                                 '<th onClick="sortTable(3,{parent.orgid}{accountId})" >BRC Inspection ID</th>',
                                                 '<th onClick="sortTable(4,{parent.orgid}{accountId})" >Inspection Date</th>',
                                                 '<th onClick="sortTable(5,{parent.orgid}{accountId})" >Flag Color</th>',
-                                                '<th>Preview</th>',
+                                                '<th class="previewCol">Preview</th>',
                                             '</tr>',
                                         '</thead>',
                                     '<tbody>',
@@ -210,7 +150,7 @@ Ext.define('MyApp.view.main.Main', {
                                                 '<td>{inspectionId}</td>',
                                                 '<td>{[Ext.Date.format(new Date(values.startDate),\"Y-m-d\")]}</td>',
                                                 '<td class="{[values.flag == \'10\' ? \'flagRed\':\'flagGreen\']}">{[flagKey[values.flag]]}</td>',
-                    '<td class="preview">', '<button class="button preview" data-appid="{app}" data-inspectionid="{inspectionId}" onClick="{openPreview(this)}">Preview</button>','</td>',
+                                                '<td class="preview previewCol">', '<button class="button preview" data-appid="{app}" data-inspectionid="{inspectionId}" onClick="{openPreview(this)}">Preview</button>','</td>',//this may not be working for canadian members
                                                 '</tr>',
                                             '</tpl>',
                                         '</tpl>',
@@ -245,11 +185,55 @@ const flagKey = {
     '40':'Passed - Blue',
 }
 const api = new Api()
+
 if (BRC.Utilities.privsEvent.loaded) {
     afterPrivs();
 }
 else {
     BRC.Utilities.privsEvent.on('privilegesLoad', afterPrivs, this, {single: true});
+}
+
+function privCheck(){
+    for (let priv of requiredPrivlges){
+        if(!BRC.Utilities.hasPriv(priv)){
+            Ext.Msg.alert('Permissions Error','You do not contain the proper Role or permission to use this application');
+            return false
+        }
+    }
+
+    return true
+}
+
+function afterPrivs() {
+    if(privCheck()){
+        apps = BRC.Utilities.applications.map(app => app.id);
+        setPartnerships().then(results =>{
+                orgInfoSet().then(r=> {
+                        Ext.getCmp('mainView').setLoading(false);
+                        getData()
+                    }
+                )
+
+            }
+        )
+    }
+}
+
+function orgInfoSet(){
+    //ading org to teh partnership org list for refrence
+    return api.orgInfo().then(results =>{
+        partnerShipKey[results.responseXML.getElementsByTagName('orgid')[0].textContent] = results.responseXML.getElementsByTagName('name')[0].textContent
+    })
+}
+
+
+function setPartnerships(){
+    //gets list of all partnerships and creates org id key
+    return api.partnershipList().then(results => {
+        Array.from(results.responseXML.getElementsByTagName('partnership')).forEach(partnership => {
+            partnerShipKey[partnership.getElementsByTagName('partnershiporgid')[0].textContent] = partnership.getElementsByTagName('partnershiporgname')[0].textContent
+        })
+    })
 }
 function openPreview(obj){
     api.inspectionGetURL(obj.dataset.appid,obj.dataset.inspectionid).then(function (result) {
@@ -274,39 +258,19 @@ function openPreview(obj){
         })
 
 }
-function privCheck(){
-    for (let priv of requiredPrivlges){
-        if(!BRC.Utilities.hasPriv(priv)){
-            Ext.Msg.alert('Permissions Error','You do not contain the proper Role or permission to use this application');
-            return false
-        }
-    }
-
-    return true
-}
-
-function afterPrivs() {
-    if(privCheck()){
-        apps = BRC.Utilities.applications.map(app => app.id);
-        setPartnerships().then(results =>{
-            Ext.getCmp('mainView').setLoading(false);
-            }
-        )
-
-    }
-}
-
-
-function setPartnerships(){
-    //gets list of all partnerships and creates org id key
-    return api.partnershipList().then(results => {
-        Array.from(results.responseXML.getElementsByTagName('partnership')).forEach(partnership => {
-            partnerShipKey[partnership.getElementsByTagName('partnershiporgid')[0].textContent] = partnership.getElementsByTagName('partnershiporgname')[0].textContent
-        })
-    })
-}
-
 function getData(){
+
+    Ext.getCmp('mainView').setLoading(true)
+    Ext.MessageBox.show({
+        msg: 'Gathering your data, please wait...',
+        progressText: 'Loading...',
+        width: 300,
+        wait: {
+            interval: 200
+        },
+
+        // maskClickAction: getMaskClickAction()
+    });
     //for each app get app list
     let inspections = apps.map(app => {
         return api.inspectionList(app).then(inspectionResults=>{
@@ -325,6 +289,10 @@ function getData(){
         Ext.getCmp('reportView').getViewModel().set('fullData', {
             'totalPercent':totalPercent,
             'orgs':Object.values(orgs)});
+            Ext.MessageBox.hide();
+            Ext.getCmp('mainView').setLoading(false)
+            Ext.getCmp('expDatabtn2').setDisabled(false)
+
         //loading flase
     })
 
@@ -368,11 +336,10 @@ function getAllpercent(){
     return {per,ttl}
 }
 
-
 class Org{
     constructor(orgid) {
         this.orgid = orgid
-        this.name = partnerShipKey[orgid] || 'UnknownName'
+        this.name = partnerShipKey[orgid] || 'Unknown Vendor '+ orgid
         this.accounts = {}
         //not sure if need other dteailes
     }
@@ -507,3 +474,195 @@ function sortTable(n,tableid) {
         }
     }
 }
+//this is not used as we went with printing the screen to pdf
+//hte cdn is turned off for save and docx
+function creatOutput(){
+    const doc = new docx.Document();
+    let parts =[
+        new docx.Paragraph({
+            heading: docx.HeadingLevel.TITLE,
+            children: [new docx.TextRun({
+
+                text: "Most Recent Inspection Status Report (by Vendor)",
+                bold: true,
+            }),
+            ],
+        }),
+        new docx.Paragraph({
+            children: [new docx.TextRun({
+                text: "Overall Percentage of Failed inspections: "+ getAllpercent().per +"%",
+                bold: true,
+            }),
+            ],
+        }),
+    ]
+
+    Object.values(orgs).forEach(org => {
+        parts.push(
+            new docx.Paragraph({
+                heading: docx.HeadingLevel.HEADING_1,
+                spacing: {
+                    before: 400,
+                },
+                children: [
+                    new docx.TextRun({
+                        text: org.name,
+                        bold: true,
+                    }),
+                ],
+             })
+        )
+        parts.push(
+            new docx.Paragraph({
+                heading: docx.HeadingLevel.HEADING_3,
+                children: [
+                    new docx.TextRun({
+                        text: "Vendor Percentage of Failed inspections: "+ org.getPercent().per +"%",
+                        bold: true,
+                    }),
+                ],
+            })
+
+        )
+
+
+        Object.values(org.accounts).forEach(account =>{
+            let accountTableRows = [
+                //header Row
+                new docx.TableRow({
+
+                    children: [
+                        new docx.TableCell({
+                            shading: {
+                                fill: "c9c9c9",
+                            },
+                            children: [new docx.Paragraph("Building Name")],
+                        }),
+                        new docx.TableCell({
+                            shading: {
+                                fill: "c9c9c9",
+                            },
+                            children: [new docx.Paragraph("Building ID")],
+                        }),
+                        new docx.TableCell({
+                            shading: {
+                                fill: "c9c9c9",
+                            },
+                            children: [new docx.Paragraph("Application")],
+                        }),
+                        new docx.TableCell({
+                            shading: {
+                                fill: "c9c9c9",
+                            },
+                            children: [new docx.Paragraph("BRC Inspection ID")],
+                        }),
+                        new docx.TableCell({
+                            shading: {
+                                fill: "c9c9c9",
+                            },
+                            children: [new docx.Paragraph("Inspection Date")],
+                        }),
+                        new docx.TableCell({
+                            shading: {
+                                fill: "c9c9c9",
+                            },
+                            children: [new docx.Paragraph("Flag Color")],
+                        }),
+                    ],
+                })
+            ]
+
+
+                Object.values(account.inspections).forEach(buildingid =>{
+                    buildingid.forEach(inspection => {
+                        // creat a row for the inspection
+                        accountTableRows.push( new docx.TableRow({
+                            children: [
+                                new docx.TableCell({
+                                    children: [new docx.Paragraph(inspection.buildingName)],
+                                }),
+                                new docx.TableCell({
+                                    children: [new docx.Paragraph(inspection.identifier)],
+                                }),
+                                new docx.TableCell({
+                                    children: [new docx.Paragraph(appToName(inspection.app))],
+                                }),
+                                new docx.TableCell({
+                                    children: [new docx.Paragraph(inspection.inspectionId)],
+                                }),
+                                new docx.TableCell({
+                                    children: [new docx.Paragraph(Ext.Date.format(new Date(inspection.startDate),"Y-m-d"))],
+                                }),
+                                new docx.TableCell({
+                                    children: [new docx.Paragraph(flagKey[inspection.flag])],
+                                }),
+                            ],
+                        })
+                        )
+
+
+                    })
+                })
+
+            parts.push(new docx.Paragraph({
+                spacing: {
+                    before: 200,
+                },
+                children: [
+                    new docx.TextRun({
+                    text: "Account: "+account.accountName,
+                    bold: true,
+                }),
+                ],
+            }))
+
+            parts.push(
+                new docx.Table({
+                    tableHeader: true,
+                    // layout:docx.TableLayoutType.FIXED,
+                    rows: accountTableRows
+            }))
+        })
+
+    })
+
+    doc.addSection({
+        properties: {
+        },
+        children: parts,
+    });
+
+    docx.Packer.toBlob(doc).then(blob => {
+        saveAs(blob, "test.docx");
+    });
+}
+
+Ext.define("plugin.Printer", {
+    statics: {
+        print: function(htmlElement,printAutomatically) {
+            var win = window.open('', 'Print Panel');
+            win.document.open();
+            win.document.write(htmlElement.outerHTML);
+            win.document.getElementById("reportView-body").classList.add("clearStylesOutput")
+            var elems = win.document.getElementsByClassName("previewCol");
+            Array.from(elems).forEach(elem => elem.remove());
+            var head =  win.document.head;
+            var link =  win.document.createElement("link");
+
+            link.type = "text/css";
+            link.rel = "stylesheet";
+            link.href = 'resources/custom.css';
+
+            head.appendChild(link);
+
+            win.document.close();
+
+            if (printAutomatically){
+                win.print()
+                setTimeout(win.close, 1000);
+            }
+
+        }
+
+    }
+});

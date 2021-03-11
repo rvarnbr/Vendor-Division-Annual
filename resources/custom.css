@@ -18,14 +18,21 @@
     margin: 0;
 
 }
+
+/*@media print {*/
+/*    .x-panel-body, .x-panel {overflow:visible !important;border:none;}*/
+/*}*/
+
+
 .masterDiv {
     padding: 35px;
 }
 .dataview-org-item {
-    margin-top: 100px;
+    margin-top: 60px;
     padding: 10px;
     /*background-color: lightcyan;*/
-    width: 70%;
+    width: 95%;
+    max-width: 1680px;
 }
 .jumpVendor{
     font-size: 15px;
@@ -77,3 +84,14 @@ th {
 table tr:nth-child(even){
     background: #F3F3F3;
 }
+
+.clearStylesOutput{
+    overflow: visible !important;
+    width: 140% !important;
+ }
+
+/*@media print {*/
+/*    .previewCol{*/
+/*        opacity: 0;*/
+/*    }*/
+/*}*/
