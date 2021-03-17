@@ -38,7 +38,7 @@ Ext.define('MyApp.view.main.Main', {
                 text: 'Refresh Data',
                 id:'getDatabtn',
                 cls: 'barButton x-btn-default-small',
-                tooltip: 'Gather all data on inspections and orgs',
+                tooltip: 'Gather all data on inspections and Vendors',
                 handler: function() {
                     getData();
                 },
@@ -48,7 +48,7 @@ Ext.define('MyApp.view.main.Main', {
                 text: 'Export/Print Data',
                 id:'expDatabtn2',
                 cls: 'barButton x-btn-default-small',
-                tooltip: 'Export',
+                tooltip: 'Opens new Window to print/Save the report as a PDF',
                 handler: function() {
                     let body = Ext.dom.Query.selectNode('#reportView-body');
                     plugin.Printer.print(body,true);
@@ -57,16 +57,7 @@ Ext.define('MyApp.view.main.Main', {
                 disabled:true,
             },
 
-            // {
-            //     text: 'Export Data',
-            //     id:'expDatabtn',
-            //     cls: 'barButton x-btn-default-small',
-            //     tooltip: 'Export',
-            //     handler: function() {
-            //         creatOutput();
-            //     },
-            //     disabled:false,
-            // },
+
         ],
 
         items: [
@@ -75,20 +66,6 @@ Ext.define('MyApp.view.main.Main', {
                 id:'reportView',
                 alias: 'widget.mypanel',
                 tbar:[
-                    // {
-                    //     text: 'Export Data',
-                    //     id:'expDatabtn2',
-                    //     cls: 'barButton x-btn-default-small',
-                    //     tooltip: 'Export',
-                    //     handler: function() {
-                    //         // let test2 = Ext.dom.Query.selectNode('#reportView-body');
-                    //         let test = Ext.dom.Query.selectNode('#reportView-body');
-                    //
-                    //         plugin.Printer.print(test,true);
-                    //
-                    //     },
-                    //     disabled:false,
-                    // },
 
                 ],
                 viewModel: {
@@ -137,7 +114,7 @@ Ext.define('MyApp.view.main.Main', {
                                                 '<th onClick="sortTable(3,{parent.orgid}{accountId})" >BRC Inspection ID</th>',
                                                 '<th onClick="sortTable(4,{parent.orgid}{accountId})" >Inspection Date</th>',
                                                 '<th onClick="sortTable(5,{parent.orgid}{accountId})" >Flag Color</th>',
-                                                '<th class="previewCol">Preview</th>',
+                                                // '<th class="previewCol">Preview</th>',//removed untill fixed on prod
                                             '</tr>',
                                         '</thead>',
                                     '<tbody>',
@@ -148,9 +125,9 @@ Ext.define('MyApp.view.main.Main', {
                                                 '<td>{identifier}</td>',
                                                 '<td>{[appToName(values.app)]}</td>',
                                                 '<td>{inspectionId}</td>',
-                                                '<td>{[Ext.Date.format(new Date(values.startDate),\"Y-m-d\")]}</td>',
+                                                '<td>{[Ext.Date.format(new Date(values.startDate.replace(/\\s/, \'T\')),\"Y-m-d\")]}</td>',
                                                 '<td class="{[values.flag == \'10\' ? \'flagRed\':\'flagGreen\']}">{[flagKey[values.flag]]}</td>',
-                                                '<td class="preview previewCol">', '<button class="button preview" data-appid="{app}" data-inspectionid="{inspectionId}" onClick="{openPreview(this)}">Preview</button>','</td>',//this may not be working for canadian members
+                                                // '<td class="preview previewCol">', '<button class="button preview" data-appid="{app}" data-inspectionid="{inspectionId}" onClick="{openPreview(this)}">Preview</button>','</td>',//this may not be working for canadian members
                                                 '</tr>',
                                             '</tpl>',
                                         '</tpl>',
@@ -218,15 +195,12 @@ function afterPrivs() {
         )
     }
 }
-
 function orgInfoSet(){
     //ading org to teh partnership org list for refrence
     return api.orgInfo().then(results =>{
         partnerShipKey[results.responseXML.getElementsByTagName('orgid')[0].textContent] = results.responseXML.getElementsByTagName('name')[0].textContent
     })
 }
-
-
 function setPartnerships(){
     //gets list of all partnerships and creates org id key
     return api.partnershipList().then(results => {
@@ -414,66 +388,65 @@ function perDiconst(data){
         'ttl': data.ttl,
         'failed': (data.ttl*data.per)/100
     }
-
 }
 
 //i stole this from w3
-function sortTable(n,tableid) {
-    var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-
-    table = document.getElementById(tableid);
-
-    switching = true;
-    // Set the sorting direction to ascending:
-    dir = "asc";
-    /* Make a loop that will continue until
-    no switching has been done: */
-    while (switching) {
-        // Start by saying: no switching is done:
-        switching = false;
-        rows = table.rows;
-        /* Loop through all table rows (except the
-        first, which contains table headers): */
-        for (i = 1; i < (rows.length - 1); i++) {
-            // Start by saying there should be no switching:
-            shouldSwitch = false;
-            /* Get the two elements you want to compare,
-            one from current row and one from the next: */
-            x = rows[i].getElementsByTagName("TD")[n];
-            y = rows[i + 1].getElementsByTagName("TD")[n];
-            /* Check if the two rows should switch place,
-            based on the direction, asc or desc: */
-            if (dir == "asc") {
-                if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-                    // If so, mark as a switch and break the loop:
-                    shouldSwitch = true;
-                    break;
-                }
-            } else if (dir == "desc") {
-                if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-                    // If so, mark as a switch and break the loop:
-                    shouldSwitch = true;
-                    break;
-                }
-            }
-        }
-        if (shouldSwitch) {
-            /* If a switch has been marked, make the switch
-            and mark that a switch has been done: */
-            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-            switching = true;
-            // Each time a switch is done, increase this count by 1:
-            switchcount ++;
-        } else {
-            /* If no switching has been done AND the direction is "asc",
-            set the direction to "desc" and run the while loop again. */
-            if (switchcount == 0 && dir == "asc") {
-                dir = "desc";
-                switching = true;
-            }
-        }
-    }
-}
+// function sortTable(n,tableid) {
+//     var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+//
+//     table = document.getElementById(tableid);
+//
+//     switching = true;
+//     // Set the sorting direction to ascending:
+//     dir = "asc";
+//     /* Make a loop that will continue until
+//     no switching has been done: */
+//     while (switching) {
+//         // Start by saying: no switching is done:
+//         switching = false;
+//         rows = table.rows;
+//         /* Loop through all table rows (except the
+//         first, which contains table headers): */
+//         for (i = 1; i < (rows.length - 1); i++) {
+//             // Start by saying there should be no switching:
+//             shouldSwitch = false;
+//             /* Get the two elements you want to compare,
+//             one from current row and one from the next: */
+//             x = rows[i].getElementsByTagName("TD")[n];
+//             y = rows[i + 1].getElementsByTagName("TD")[n];
+//             /* Check if the two rows should switch place,
+//             based on the direction, asc or desc: */
+//             if (dir == "asc") {
+//                 if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+//                     // If so, mark as a switch and break the loop:
+//                     shouldSwitch = true;
+//                     break;
+//                 }
+//             } else if (dir == "desc") {
+//                 if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+//                     // If so, mark as a switch and break the loop:
+//                     shouldSwitch = true;
+//                     break;
+//                 }
+//             }
+//         }
+//         if (shouldSwitch) {
+//             /* If a switch has been marked, make the switch
+//             and mark that a switch has been done: */
+//             rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+//             switching = true;
+//             // Each time a switch is done, increase this count by 1:
+//             switchcount ++;
+//         } else {
+//             /* If no switching has been done AND the direction is "asc",
+//             set the direction to "desc" and run the while loop again. */
+//             if (switchcount == 0 && dir == "asc") {
+//                 dir = "desc";
+//                 switching = true;
+//             }
+//         }
+//     }
+// }
 //this is not used as we went with printing the screen to pdf
 //hte cdn is turned off for save and docx
 function creatOutput(){
@@ -640,6 +613,7 @@ function creatOutput(){
 Ext.define("plugin.Printer", {
     statics: {
         print: function(htmlElement,printAutomatically) {
+
             var win = window.open('', 'Print Panel');
             win.document.open();
             win.document.write(htmlElement.outerHTML);
@@ -648,19 +622,16 @@ Ext.define("plugin.Printer", {
             Array.from(elems).forEach(elem => elem.remove());
             var head =  win.document.head;
             var link =  win.document.createElement("link");
-
             link.type = "text/css";
             link.rel = "stylesheet";
-            link.href = 'resources/custom.css';
-
+            link.href = 'vendor-division-annual/resources/custom.css';//this is a special case for the new window opening
+            // link.href = 'resources/custom.css';
+            link.addEventListener('load', function (){
+                win.print()
+                win.document.close();
+            });
             head.appendChild(link);
 
-            win.document.close();
-
-            if (printAutomatically){
-                win.print()
-                setTimeout(win.close, 1000);
-            }
 
         }
 

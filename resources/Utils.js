@@ -129,16 +129,6 @@ class Api {
         })
     }
 
-    deviceList(appid,inspectionid) {
-        return this.apiWait().then(result => {
-            return Ext.Ajax.request({
-                url: '/api/?a=deviceList&appid=' + appid + '&inspid=' + inspectionid,
-                async: true,
-                success: function(response){ this.responseCheck(response)}
-
-            })
-        })
-    }
 
     inspectionGet(appid,buildingid){
         return this.apiWait().then(result => {
