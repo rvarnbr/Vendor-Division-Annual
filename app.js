@@ -8,7 +8,7 @@ Ext.scopeCss = true;
 Ext.application({
     extend: 'MyApp.Application',
 
-    name: 'Vendor-Division-Annual',
+    name: 'Vendor-Division-Annual-Rework',
 
     requires: [
         'BRC.Constants',

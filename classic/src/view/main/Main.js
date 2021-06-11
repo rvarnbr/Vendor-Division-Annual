@@ -114,6 +114,11 @@ Ext.define('MyApp.view.main.Main', {
                                                 '<th onClick="sortTable(3,{parent.orgid}{accountId})" >BRC Inspection ID</th>',
                                                 '<th onClick="sortTable(4,{parent.orgid}{accountId})" >Inspection Date</th>',
                                                 '<th onClick="sortTable(5,{parent.orgid}{accountId})" >Flag Color</th>',
+                                                '<th onClick="sortTable(6,{parent.orgid}{accountId})" >Failed (Devices)</th>',
+                                                '<th onClick="sortTable(6,{parent.orgid}{accountId})" >Failed Percent</th>',
+                                                '<th onClick="sortTable(7,{parent.orgid}{accountId})" >Date of last Change</th>',
+                                                '<th onClick="sortTable(7,{parent.orgid}{accountId})" >Days since last device change</th>',
+                                                // '<th onClick="sortTable(8,{parent.orgid}{accountId})" >Flag Color</th>',
                                                 // '<th class="previewCol">Preview</th>',//removed untill fixed on prod
                                             '</tr>',
                                         '</thead>',
@@ -127,6 +132,10 @@ Ext.define('MyApp.view.main.Main', {
                                                 '<td>{inspectionId}</td>',
                                                 '<td>{[Ext.Date.format(new Date(values.startDate.replace(/\\s/, \'T\')),\"Y-m-d\")]}</td>',
                                                 '<td class="{[values.flag == \'10\' ? \'flagRed\':\'flagGreen\']}">{[flagKey[values.flag]]}</td>',
+                                                '<td>{failedDevices}</td>',
+                                                '<td>{failedPercent}</td>',
+                                                '<td>{[Ext.Date.format(new Date(values.endDate.replace(/\\s/, \'T\')),\"Y-m-d\")]}</td>',//last update
+                                                '<td>{daysSinceUpdate}</td>',
                                                 // '<td class="preview previewCol">', '<button class="button preview" data-appid="{app}" data-inspectionid="{inspectionId}" onClick="{openPreview(this)}">Preview</button>','</td>',//this may not be working for canadian members
                                                 '</tr>',
                                             '</tpl>',
@@ -246,6 +255,7 @@ function getData(){
         // maskClickAction: getMaskClickAction()
     });
     //for each app get app list
+    let deviceListCalls = []
     let inspections = apps.map(app => {
         return api.inspectionList(app).then(inspectionResults=>{
             //maybe have teh api do the filter??
@@ -259,15 +269,18 @@ function getData(){
     })
 
     Promise.all(inspections).then(test => {
-        let totalPercent = getAllpercent().per
-        Ext.getCmp('reportView').getViewModel().set('fullData', {
-            'totalPercent':totalPercent,
-            'orgs':Object.values(orgs)});
+        Promise.all(Object.values(orgs).map(org =>
+            org.getFailedInspectionData()
+        )).then(r => {
+            let totalPercent = getAllpercent().per
+            Ext.getCmp('reportView').getViewModel().set('fullData', {
+                'totalPercent':totalPercent,
+                'orgs':Object.values(orgs)});
             Ext.MessageBox.hide();
             Ext.getCmp('mainView').setLoading(false)
             Ext.getCmp('expDatabtn2').setDisabled(false)
 
-        //loading flase
+        })//loading flase
     })
 
     //iterate wtih a sepearte function used by all inspectiion list calls
@@ -324,6 +337,12 @@ class Org{
         this.accounts[inspectionObj.accountId].addInspection(inspectionObj)
     }
 
+    getFailedInspectionData(){
+        return Promise.all( Object.values(this.accounts).map(account =>
+            account.getFailedInspectionData()
+        ))
+    }
+
     getPercent(){
         let ttl = 0
         let failed = 0
@@ -350,7 +369,18 @@ class Account {
         }
         this.inspections[inspectionObj.buildingId].push(inspectionObj)
     }
+    getFailedInspectionData(){
 
+        return Promise.all(
+             [].concat.apply([], Object.values(this.inspections))
+
+            .filter(inspection => inspection.flag === '10'
+            )
+            .map(inspection => inspection.getInspectionDeviceData())
+
+
+    ) //only get failed inspection objects
+    }
     getPercent(){
         let ttl = 0
         let failed = 0
@@ -365,6 +395,8 @@ class Account {
     }
 }
 
+
+
 class InspectionClass{
     constructor(inspectionXml, appid) {
         this.orgid = inspectionXml.getElementsByTagName('orgid')[0].textContent
@@ -374,11 +406,42 @@ class InspectionClass{
         this.buildingId = inspectionXml.getElementsByTagName('buildingid')[0].textContent
         this.identifier = inspectionXml.getElementsByTagName('identifier')[0].textContent
         this.address = inspectionXml.getElementsByTagName('address')[0].textContent
-        this.flag = inspectionXml.getElementsByTagName('statusflagid')[0].textContent //by id
+        this.flag = inspectionXml.getElementsByTagName('statusflagid')[0].textContent //by id // if flag is red need to check devices
         this.startDate = inspectionXml.getElementsByTagName('startdate')[0].textContent
+        this.endDate = inspectionXml.getElementsByTagName('enddate')[0].textContent //used to show when the last time teh report was modifed only If it was done on a handheld
+        this.daysSinceUpdate = (this.flag === '10') ? this.daySince():0 //days since last enddate if flag is failed
+        this.failedDevices = 0
+        this.ttlDevices = ''//may not use
+        this.failedPercent = 'Passed'
         this.inspectionId = inspectionXml.getElementsByTagName('inspectionid')[0].textContent
         this.app = appid
 
+    }
+    daySince(){
+
+        return Ext.Date.diff(new Date(this.endDate),new Date(), "d")
+    }
+    getInspectionDeviceData(){
+        return api.deviceList(this.app, this.inspectionId)
+            .then(results => {
+                Ext.MessageBox.show({
+                    message: 'Gathering Discrepancy Data ' + api.count +' left. please wait...',
+                    progressText: 'Loading...',
+                    width: 300,
+                    wait: {
+                        interval: 200
+                    },
+
+                    // maskClickAction: getMaskClickAction()
+                });
+                if(resultCheck(results)) {
+                    let deviceListXml = results;
+                    this.ttlDevices  =  deviceListXml.responseXML.getElementsByTagName('device').length;
+                    this.failedDevices = Array.from(deviceListXml.responseXML.getElementsByTagName('device')).filter(device => (device.getElementsByTagName('tested')[0].textContent === 'true' && device.getElementsByTagName('passed')[0].textContent === 'false')).length
+                    this.failedPercent  =  Ext.util.Format.number(this.failedDevices / this.ttlDevices *100, '0.##%')
+
+                }
+            } )
     }
 
 }
@@ -391,62 +454,62 @@ function perDiconst(data){
 }
 
 //i stole this from w3
-// function sortTable(n,tableid) {
-//     var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-//
-//     table = document.getElementById(tableid);
-//
-//     switching = true;
-//     // Set the sorting direction to ascending:
-//     dir = "asc";
-//     /* Make a loop that will continue until
-//     no switching has been done: */
-//     while (switching) {
-//         // Start by saying: no switching is done:
-//         switching = false;
-//         rows = table.rows;
-//         /* Loop through all table rows (except the
-//         first, which contains table headers): */
-//         for (i = 1; i < (rows.length - 1); i++) {
-//             // Start by saying there should be no switching:
-//             shouldSwitch = false;
-//             /* Get the two elements you want to compare,
-//             one from current row and one from the next: */
-//             x = rows[i].getElementsByTagName("TD")[n];
-//             y = rows[i + 1].getElementsByTagName("TD")[n];
-//             /* Check if the two rows should switch place,
-//             based on the direction, asc or desc: */
-//             if (dir == "asc") {
-//                 if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
-//                     // If so, mark as a switch and break the loop:
-//                     shouldSwitch = true;
-//                     break;
-//                 }
-//             } else if (dir == "desc") {
-//                 if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
-//                     // If so, mark as a switch and break the loop:
-//                     shouldSwitch = true;
-//                     break;
-//                 }
-//             }
-//         }
-//         if (shouldSwitch) {
-//             /* If a switch has been marked, make the switch
-//             and mark that a switch has been done: */
-//             rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-//             switching = true;
-//             // Each time a switch is done, increase this count by 1:
-//             switchcount ++;
-//         } else {
-//             /* If no switching has been done AND the direction is "asc",
-//             set the direction to "desc" and run the while loop again. */
-//             if (switchcount == 0 && dir == "asc") {
-//                 dir = "desc";
-//                 switching = true;
-//             }
-//         }
-//     }
-// }
+function sortTable(n,tableid) {
+    var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+
+    table = document.getElementById(tableid);
+
+    switching = true;
+    // Set the sorting direction to ascending:
+    dir = "asc";
+    /* Make a loop that will continue until
+    no switching has been done: */
+    while (switching) {
+        // Start by saying: no switching is done:
+        switching = false;
+        rows = table.rows;
+        /* Loop through all table rows (except the
+        first, which contains table headers): */
+        for (i = 1; i < (rows.length - 1); i++) {
+            // Start by saying there should be no switching:
+            shouldSwitch = false;
+            /* Get the two elements you want to compare,
+            one from current row and one from the next: */
+            x = rows[i].getElementsByTagName("TD")[n];
+            y = rows[i + 1].getElementsByTagName("TD")[n];
+            /* Check if the two rows should switch place,
+            based on the direction, asc or desc: */
+            if (dir == "asc") {
+                if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                    // If so, mark as a switch and break the loop:
+                    shouldSwitch = true;
+                    break;
+                }
+            } else if (dir == "desc") {
+                if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                    // If so, mark as a switch and break the loop:
+                    shouldSwitch = true;
+                    break;
+                }
+            }
+        }
+        if (shouldSwitch) {
+            /* If a switch has been marked, make the switch
+            and mark that a switch has been done: */
+            rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+            switching = true;
+            // Each time a switch is done, increase this count by 1:
+            switchcount ++;
+        } else {
+            /* If no switching has been done AND the direction is "asc",
+            set the direction to "desc" and run the while loop again. */
+            if (switchcount == 0 && dir == "asc") {
+                dir = "desc";
+                switching = true;
+            }
+        }
+    }
+}
 //this is not used as we went with printing the screen to pdf
 //hte cdn is turned off for save and docx
 function creatOutput(){

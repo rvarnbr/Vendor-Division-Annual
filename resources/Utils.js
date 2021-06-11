@@ -38,6 +38,7 @@ class Api {
         this.calls = [];//datetime stamps of apicalls
         this.maxCallsMin = 35;
         this.slowdonwTime = 4000
+        this.count = 0
 
     }
 
@@ -51,8 +52,10 @@ class Api {
 
         let waite = Math.max(0, (this.waitTime - (Date.now() - this.apiTime)));//can either be called now or
         this.apiTime = Date.now() + waite ;//last time a call was made
+        this.count += 1
+        return new Promise(function(resolve){return setTimeout(resolve, waite)}).then(result => {this.count -=1
 
-        return new Promise(function(resolve){return setTimeout(resolve, waite)})
+        })
     }
 
 //apis
@@ -152,5 +155,28 @@ class Api {
         })
     }
 
+    deviceList(appid,inspectionid) {
+        return this.apiWait().then(results=>{
+            return Ext.Ajax.request({
+                url: '/api/?a=deviceList&appid='+appid+'&inspid='+inspectionid,
+                async: true,
+            });
+        });
+
+    }
+
 }
 
+function resultCheck(result){
+    if (result.responseXML.getElementsByTagName('response')[0].getAttribute('success') === 'false'){
+        console.log(result.responseXML.getElementsByTagName('responsedetail')[0].getElementsByTagName('error')[0].textContent);
+        console.log(result.responseXML.getElementsByTagName('responsedetail')[0].getElementsByTagName('errormessage')[0].textContent);
+
+        return false
+    }else{
+        return true
+
+    }
+
+
+}
